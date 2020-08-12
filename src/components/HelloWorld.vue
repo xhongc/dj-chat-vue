@@ -1,6 +1,15 @@
 <template>
   <div>
-    {{msg}}
+    <el-container>
+      <el-container>
+        <el-aside width="70px">Aside</el-aside>
+        <el-aside width="350px">Aside</el-aside>
+        <el-container>
+          <el-main>Main</el-main>
+          <el-footer>Footer</el-footer>
+        </el-container>
+      </el-container>
+    </el-container>
   </div>
 </template>
 <script>import axios from 'axios'
@@ -33,11 +42,23 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-  li {
-    list-style: none;
-  }
-
-  .sider-l {
-    background-color: white;
-  }
+  .el-header, .el-footer {
+      background-color: #B3C0D1;
+      color: #333;
+      text-align: center;
+      line-height: 60px;
+    }
+    .el-aside {
+      background-color: #D3DCE6;
+      color: #333;
+      text-align: center;
+      line-height: 100vh;
+      margin-right: 0.8125rem;
+    }
+    .el-main {
+      background-color: #E9EEF3;
+      color: #333;
+      text-align: center;
+      line-height: 160px;
+    }
 </style>
