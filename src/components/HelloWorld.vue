@@ -2,8 +2,39 @@
   <div>
     <el-container>
       <el-container>
-        <el-aside width="70px">Aside</el-aside>
-        <el-aside width="350px">Aside</el-aside>
+        <el-aside width="70px" style="background-color: white;">
+          <div>
+            <i class="el-icon-chat-dot-round nav-first"></i>
+          </div>
+          <div>
+            <i class="el-icon-chat-line-square nav"></i>
+          </div>
+          <div>
+            <i class="el-icon-user nav"></i>
+          </div>
+          <div style="height: 420px">
+            <i class="el-icon-star-off nav"></i>
+          </div>
+          <div>
+            <i class="el-icon-edit nav"></i>
+          </div>
+          <div>
+            <i class="el-icon-setting nav"></i>
+          </div>
+          <div>
+            <i class="el-icon-switch-button nav"></i>
+          </div>
+        </el-aside>
+        <el-aside width="350px">
+          <div class="sidebar-body">
+            <div class="user-info">
+              <span>Hi {{nickName}}</span>
+              <el-button><i class="el-icon-user"></i></el-button>
+              <el-button><i class="el-icon-user"></i></el-button>
+              <el-input style="width: 320px" placeholder="搜索用户"></el-input>
+            </div>
+          </div>
+        </el-aside>
         <el-container>
           <el-main>Main</el-main>
           <el-footer>Footer</el-footer>
@@ -19,6 +50,7 @@ export default {
   data () {
     return {
       msg: 'title',
+      nickName: 'charlesss',
       isCollapsed: false,
       message: ''
     }
@@ -43,22 +75,57 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
   .el-header, .el-footer {
-      background-color: #B3C0D1;
+      background-color: #E9EEF3;
       color: #333;
       text-align: center;
       line-height: 60px;
     }
     .el-aside {
-      background-color: #D3DCE6;
+      /*background-color: white;*/
       color: #333;
       text-align: center;
       line-height: 100vh;
-      margin-right: 0.8125rem;
+      margin-right: 1rem;
     }
     .el-main {
       background-color: #E9EEF3;
       color: #333;
       text-align: center;
       line-height: 160px;
+    }
+    .nav-first {
+      width: 70px;
+      height: 60px;
+      font-size: 38px;
+      display: block;
+      margin-bottom:17px;
+      padding-top: 17px;
+      background-color: #67C23A;
+      color: white;
+    }
+    .nav {
+      margin-bottom:5px;
+      width: 70px;
+      height: 60px;
+      font-size: 22px;
+      display: block;
+      cursor: pointer;
+    }
+    .sidebar-body {
+      background-color: white;
+      border-radius: 10px;
+      height: 94%;
+      width: 100%;
+      top: 30px;
+      position: relative;
+      overflow: hidden;
+    }
+    .user-info {
+      height: 80px;
+      font-size: 28px;
+      padding-top: 8px;
+      margin-left: 20px;
+      line-height: 60px;
+      text-align: left;
     }
 </style>
