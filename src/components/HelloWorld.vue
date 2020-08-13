@@ -3,7 +3,7 @@
     <el-container>
       <el-container>
         <el-aside width="70px" style="background-color: white;">
-          <div style="height: 100vh;">
+          <div>
             <div>
               <i class="el-icon-chat-dot-round nav-first"></i>
             </div>
@@ -16,7 +16,7 @@
             <div>
               <i class="el-icon-star-off nav"></i>
             </div>
-            <div style="height: 62vh;">
+            <div style="height: 42.5vh;">
             </div>
             <div>
               <i class="el-icon-edit nav"></i>
