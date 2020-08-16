@@ -5,19 +5,24 @@ import cookie from './cookie'
 
 Vue.use(Vuex)
 
-const userInfo = {
-  name: cookie.getCookie('name') || '',
-  token: cookie.getCookie('token') || ''
-}
-
 const state = {
-  userInfo
+  userInfo: {},
+  GroupInfo: {},
+  token: cookie.getCookie('token') || ''
 }
 export default new Vuex.Store({
   state,
+  getters: {
+    userInfoGetter: state => state.userInfo,
+    GroupInfoGetter: state => state.GroupInfo
+  },
   mutations: {
     setUserInfo (state, token) {
-      state.userInfo.token = token
+      state.token = token
+    },
+    setInitInfo (state, InitInfo) {
+      state.userInfo = InitInfo.user_info
+      state.GroupInfo = InitInfo.room_info
     }
   }
 })

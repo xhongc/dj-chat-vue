@@ -8,8 +8,8 @@ import router from '../router'
 // http request 拦截器
 axios.interceptors.request.use(
   config => {
-    if (store.state.userInfo.token) { // 判断是否存在token，如果存在的话，则每个http header都加上token
-      config.headers.Authorization = `JWT ${store.state.userInfo.token}`
+    if (store.state.token) { // 判断是否存在token，如果存在的话，则每个http header都加上token
+      config.headers.Authorization = `JWT ${store.state.token}`
     }
     return config
   },
