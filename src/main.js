@@ -9,9 +9,14 @@ import Axios from 'axios'
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import 'element-ui/lib/theme-chalk/display.css'
+import APlayer from '@moefe/vue-aplayer'
 
 Vue.config.productionTip = false
 Vue.use(ElementUI)
+Vue.use(APlayer, {
+  defaultCover: 'https://github.com/u3u.png',
+  productionTip: true
+})
 /* eslint-disable no-new */
 new Vue({
   el: '#app',

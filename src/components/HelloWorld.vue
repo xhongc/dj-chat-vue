@@ -2,8 +2,8 @@
   <div style="height: 100%">
     <el-container>
       <el-container>
-        <el-aside width="70px" style="background-color: white;height: 100vh">
-          <div>
+        <el-aside width="70px" style="background-color: white">
+          <div class="slider">
             <div>
               <i class="el-icon-chat-dot-round nav-first"></i>
             </div>
@@ -16,6 +16,7 @@
             <div>
               <i class="el-icon-star-off nav"></i>
             </div>
+            <div style="flex:1;overflow: hidden"></div>
             <div>
               <i class="el-icon-edit nav-footer"></i>
             </div>
@@ -39,9 +40,12 @@
             </section>
             <section class="user-list">
               <div v-for="(item,index) in groupInfo" :key="'chat-list'+index" @click="showChatBox(index)" class="user-per" :class="{'active':active_index===index}">
-                <img class="ava-img" :src=item.img_path />
+                <el-avatar size="small" :src=item.img_path class="ava-img" @error=false>
+                  <el-avatar> {{item.room_name[0]}} </el-avatar>
+                </el-avatar>
                 <div class="group-title">{{item.room_name}}</div>
                 <div class="group-info">{{item.room_description}}</div>
+                <el-badge :value="100" :max="10" class="group-badge"></el-badge>
               </div>
             </section>
           </div>
@@ -72,7 +76,7 @@
                 <el-row v-for="(content,index) in msgLists" :key="'content'+index" :gutter="10">
                 <el-col v-if="userInfo.unicode_id===content.user_uid" class="chat-msg" :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
                   <div>
-                    <img class="chat-img hidden-sm-and-down" :src=content.img_path />
+                    <el-avatar :size="30" :src="content.img_path" shape="square" class="chat-img hidden-sm-and-down"></el-avatar>
                     <div class="chat-content">{{content.message}}</div>
                   </div>
                 </el-col>
@@ -136,8 +140,6 @@ export default {
     }
   },
   mounted () {
-    console.log(this.$store.getters.userInfoGetter)
-    console.log(this.userInfo)
   },
   created () {
     this.initWebSocket()
@@ -165,6 +167,9 @@ export default {
       this.active_index = index
     },
     sendMessage () {
+      if (this.textarea === '') {
+        return
+      }
       this.websocketSend('chat_message')
       this.msgList.push({'message': this.textarea, 'img_path': this.userInfo.img_path, 'user_uid': this.userInfo.unicode_id})
       this.textarea = ''
@@ -177,7 +182,6 @@ export default {
       let token = `JWT ${store.state.token}`
       const wsuri = 'ws://127.0.0.1:8099/ws/chat' + '/?token=' + token
       this.chatSocket = new WebSocket(wsuri)
-      console.log('chatSocket.readyState', this.chatSocket.readyState)
       this.chatSocket.onmessage = this.websocketOnmessage
       this.chatSocket.onopen = this.websocketOnopen
       this.chatSocket.onerror = this.websocketOnerror
@@ -194,7 +198,6 @@ export default {
       if (data.action === 'first_init') {
         this.$store.commit('setInitInfo', data.extra_data)
       } else if (data.action === 'chat_message') {
-        console.log(this.userInfo.unicode_id)
         if (data.user_uid !== this.userInfo.unicode_id) {
           this.msgList.push(data)
         }
@@ -218,20 +221,27 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style>
 .el-aside {
-  /* background-color: white; */
   color: #333;
   text-align: center;
   line-height: 100vh;
   margin-right: 1rem;
   overflow: hidden;
 }
-
+.slider{
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
 .el-main {
   margin: 0 auto;
   padding: 0;
   padding-right: 30px;
 }
-
+.el-row {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
 .nav-first {
   width: 70px;
   height: 60px;
@@ -259,8 +269,6 @@ export default {
   font-size: 22px;
   display: block;
   cursor: pointer;
-  position: relative;
-  top: 62vh;
 }
 
 .sidebar-body {
@@ -335,10 +343,9 @@ export default {
 }
 
 .ava-img {
-  height: 1.875rem;
-  width: 1.875rem;
   position: absolute;
   left: 25px;
+  background: white;
 }
 
 .group-title {
@@ -354,7 +361,10 @@ export default {
   color: gray;
   font-size: 14px;
 }
-
+.group-badge {
+  position: absolute;
+  left: 18.1rem;
+}
 i:hover {
   color: seagreen;
 }
@@ -426,10 +436,9 @@ i:hover {
   margin-left: 30px;
   }
 .chat-img {
+  background-color: whitesmoke;
   display: inline-block;
   vertical-align: bottom;
-  height: 1.875rem;
-  width: 1.875rem;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
 }
 .chat-content {
