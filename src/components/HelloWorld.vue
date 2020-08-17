@@ -68,8 +68,8 @@
                   </div>
                 </el-col>
               </el-row>
-              <div class="chat-body">
-                <el-row v-for="(content,index) in msgList" :key="'content'+index" :gutter="10">
+              <div class="chat-body" ref="chat_body">
+                <el-row v-for="(content,index) in msgLists" :key="'content'+index" :gutter="10">
                 <el-col v-if="userInfo.unicode_id===content.user_uid" class="chat-msg" :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
                   <div>
                     <img class="chat-img hidden-sm-and-down" :src=content.img_path />
@@ -146,6 +146,13 @@ export default {
     this.chatSocket.close()
   },
   computed: {
+    msgLists () {
+      this.$nextTick(() => {
+        let msg = this.$refs.chat_body
+        msg.scrollTop = msg.scrollHeight // 滚动高度
+      })
+      return this.msgList
+    },
     ...mapGetters({
       userInfo: 'userInfoGetter',
       groupInfo: 'GroupInfoGetter'
@@ -162,7 +169,7 @@ export default {
       this.msgList.push({'message': this.textarea, 'img_path': this.userInfo.img_path, 'user_uid': this.userInfo.unicode_id})
       this.textarea = ''
       this.$nextTick(() => {
-        let msg = document.querySelector('.chat-body')
+        let msg = this.$refs.chat_body
         msg.scrollTop = msg.scrollHeight // 滚动高度
       })
     },
