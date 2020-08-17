@@ -76,7 +76,13 @@
                 <el-row v-for="(content,index) in msgLists" :key="'content'+index" :gutter="10">
                 <el-col v-if="userInfo.unicode_id===content.user_uid" class="chat-msg" :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
                   <div>
-                    <el-avatar :size="30" :src="content.img_path" shape="square" class="chat-img hidden-sm-and-down"></el-avatar>
+                    <el-popover
+                      placement="right"
+                      width="60px"
+                      trigger="click">
+                      <el-avatar :size="60" :src="content.img_path" shape="square" class="chat-img hidden-sm-and-down"></el-avatar>
+                      <el-avatar slot="reference" :size="30" :src="content.img_path" shape="square" class="chat-img hidden-sm-and-down"></el-avatar>
+                    </el-popover>
                     <div class="chat-content">{{content.message}}</div>
                   </div>
                 </el-col>
