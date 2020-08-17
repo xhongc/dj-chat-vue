@@ -23,6 +23,7 @@ export default new Vuex.Store({
     setInitInfo (state, InitInfo) {
       state.userInfo = InitInfo.user_info
       state.GroupInfo = InitInfo.room_info
+      console.log(InitInfo.user_info)
     }
   }
 })

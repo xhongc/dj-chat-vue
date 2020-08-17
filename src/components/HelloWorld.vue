@@ -49,7 +49,7 @@
         <el-container>
           <el-main>
             <div class="chat-box" v-show="isShowChatBox">
-              <el-row :gutter="10">
+              <el-row :gutter="10" class="chat-header">
                 <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
                   <div class="chat-title">
                     <img :src="activeGroupInfo.img_path" />
@@ -68,31 +68,41 @@
                   </div>
                 </el-col>
               </el-row>
-              <div v-for="(content,index) in msgList" :key="'content'+index">
-                <div>
-                  <img class="ava-img" :src=content.img_path />
-                  <div>{{content.message}}</div>
-                </div>
+              <div class="chat-body">
+                <el-row v-for="(content,index) in msgList" :key="'content'+index" :gutter="10">
+                <el-col v-if="userInfo.unicode_id===content.user_uid" class="chat-msg" :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
+                  <div>
+                    <img class="chat-img hidden-sm-and-down" :src=content.img_path />
+                    <div class="chat-content">{{content.message}}</div>
+                  </div>
+                </el-col>
+                <el-col v-else class="chat-msg-right" :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
+                  <div style="float: right">
+                    <div class="chat-content-right">{{content.message}}</div>
+                    <img class="chat-img-right hidden-sm-and-down" :src=content.img_path />
+                  </div>
+                </el-col>
+              </el-row>
               </div>
-              <footer class="chat-input">
-                <div class="input-expend">
-                  <el-button type="text">文字按钮</el-button>
-                  <el-button type="text">文字按钮</el-button>
-                  <el-button type="text">文字按钮</el-button>
-                </div>
-                <el-input
-                  type="textarea"
-                  placeholder="chàng suǒ yù yán"
-                  maxlength="811"
-                  show-word-limit
-                  v-model="textarea"
-                  rows=3
-                  resize=none
-                  autofocus=true
-                  @keydown.enter.native.exact.prevent="sendMessage"
-                  v-on:keyup.alt.enter.native="textarea+='\n'"
-                ></el-input>
-              </footer>
+                <div class="chat-input">
+                  <div class="input-expend">
+                    <el-button type="text">文字按钮</el-button>
+                    <el-button type="text">文字按钮</el-button>
+                    <el-button type="text">文字按钮</el-button>
+                  </div>
+                  <el-input
+                    type="textarea"
+                    placeholder="chàng suǒ yù yán"
+                    maxlength="811"
+                    show-word-limit
+                    v-model="textarea"
+                    rows=3
+                    resize=none
+                    autofocus=true
+                    @keydown.enter.native.exact.prevent="sendMessage"
+                    v-on:keyup.alt.enter.native="textarea+='\n'"
+                  ></el-input>
+              </div>
             </div>
           </el-main>
         </el-container>
@@ -149,8 +159,12 @@ export default {
     },
     sendMessage () {
       this.websocketSend('chat_message')
-      this.msgList.push({'message': this.textarea, 'img_path': this.userInfo.img_path})
+      this.msgList.push({'message': this.textarea, 'img_path': this.userInfo.img_path, 'user_uid': this.userInfo.unicode_id})
       this.textarea = ''
+      this.$nextTick(() => {
+        let msg = document.querySelector('.chat-body')
+        msg.scrollTop = msg.scrollHeight // 滚动高度
+      })
     },
     initWebSocket () {
       let token = `JWT ${store.state.token}`
@@ -196,13 +210,6 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style>
-.el-header, .el-footer {
-  background-color: #E9EEF3;
-  color: #333;
-  text-align: center;
-  line-height: 60px;
-}
-
 .el-aside {
   /* background-color: white; */
   color: #333;
@@ -216,7 +223,6 @@ export default {
   margin: 0 auto;
   padding: 0;
   padding-right: 30px;
-  overflow: hidden;
 }
 
 .nav-first {
@@ -247,7 +253,7 @@ export default {
   display: block;
   cursor: pointer;
   position: relative;
-  top: 21rem;
+  top: 62vh;
 }
 
 .sidebar-body {
@@ -346,7 +352,7 @@ i:hover {
   color: seagreen;
 }
 
-.el-row {
+.chat-header {
   background-color: white;
 }
 
@@ -357,11 +363,12 @@ i:hover {
 .chat-box {
   background-color: whitesmoke;
   border-radius: 10px;
-  height: 94%;
+  height: 94vh;
   width: 100%;
-  top: 30px;
-  position: relative;
   overflow: hidden;
+  display:flex; /*父元素的定义为flex布局*/
+  flex-direction: column; /*定义排列方向为竖排*/
+  margin-top: 30px;
 }
 
 .chat-title {
@@ -382,19 +389,8 @@ i:hover {
   cursor: pointer;
 }
 
-.grid-content {
-  border-radius: 4px;
-  min-height: 36px;
-}
-
-.bg-purple-light {
-  background: white;
-}
-
 .music {
   margin-top: 1.75rem;
-  /* width: 2.8125rem;
-  height: 2.5rem; */
 }
 
 .music i {
@@ -408,8 +404,7 @@ i:hover {
 
 .chat-input {
   width: 100%;
-  position: absolute;
-  bottom: 0rem;
+  bottom: 0;
 }
 
 .input-expend {
@@ -419,4 +414,61 @@ i:hover {
   border-top: 1px solid #DCDFE6;
   padding-left: 0.625rem;
 }
+.chat-msg{
+  margin-top: 40px;
+  margin-left: 30px;
+  }
+.chat-img {
+  display: inline-block;
+  vertical-align: bottom;
+  height: 1.875rem;
+  width: 1.875rem;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
+}
+.chat-content {
+  display: inline-block;
+  vertical-align: bottom;
+  border: 1px solid white;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  background-color: white;
+  margin-left: 10px;
+  /*width: 100px;*/
+  max-width: 20vw;
+  line-height: 28px;
+  text-align: left;
+  padding-left: 20px;
+  padding-right: 20px;
+  }
+.chat-msg-right{
+    margin-top: 40px;
+    margin-right: 30px;
+    float: right;
+  }
+.chat-content-right{
+  display: inline-block;
+  vertical-align: bottom;
+  border: 1px solid white;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  background-color: white;
+  margin-right: 10px;
+  /*width: 100px;*/
+  max-width: 20vw;
+  line-height: 28px;
+  text-align: left;
+  padding-left: 20px;
+  padding-right: 20px;
+  }
+.chat-img-right {
+  display: inline-block;
+  vertical-align: bottom;
+  height: 1.875rem;
+  width: 1.875rem;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
+  }
+.chat-body{
+  flex:1; /*中间分配剩下的所有空间*/
+  overflow:auto;
+  }
 </style>
