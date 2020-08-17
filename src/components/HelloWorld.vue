@@ -477,5 +477,6 @@ i:hover {
 .chat-body{
   flex:1; /*中间分配剩下的所有空间*/
   overflow:auto;
+  padding-bottom: 30px;
   }
 </style>
