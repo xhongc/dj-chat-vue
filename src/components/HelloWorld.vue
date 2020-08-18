@@ -124,7 +124,7 @@ export default {
 .el-main {
   margin: 0 auto;
   padding: 0;
-  padding-right: 30px;
+  padding-right: 15px;
 }
 .el-row {
   margin-left: 0 !important;

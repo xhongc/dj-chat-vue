@@ -12,7 +12,8 @@ const state = {
   token: cookie.getCookie('token') || '',
   ChatSocket: null,
   chatTextArea: '',
-  activeChannelNo: -1
+  activeChannelNo: -1,
+  audiosList: []
 }
 export default new Vuex.Store({
   state,
@@ -25,7 +26,8 @@ export default new Vuex.Store({
     msgHistoryGetter: state => state.msgHistory,
     ChatSocketGetter: state => state.ChatSocket,
     activeChannelNo: state => state.activeChannelNo,
-    chatTextAreaGetter: state => state.chatTextArea
+    chatTextAreaGetter: state => state.chatTextArea,
+    audiosListGetter: state => state.audiosList
   },
   mutations: {
     setUserInfo (state, token) {
@@ -52,6 +54,9 @@ export default new Vuex.Store({
     },
     setChatTextArea (state, chatTextArea) {
       state.chatTextArea = chatTextArea
+    },
+    pushAudiosList (state, data) {
+      state.audiosList.push(data)
     }
   },
   actions: {

@@ -128,6 +128,7 @@
           return
         }
         // this.websocketSend('chat_message')
+        this.$store.commit('setChatTextArea', this.textarea)
         this.$store.dispatch('websocketSend', 'chat_message')
         let data = {
           'message': this.textarea,
@@ -136,7 +137,6 @@
           'channel_no': this.activeChannelNo
         }
         this.$store.commit('pushMsgHistory', data)
-        this.$store.commit('setChatTextArea', this.textarea)
         this.textarea = ''
         this.$nextTick(() => {
           let msg = this.$refs.chat_body
@@ -168,6 +168,9 @@
           if (data.user_uid !== this.userInfo.unicode_id) {
             this.$store.commit('pushMsgHistory', data)
           }
+        } else if (data.action === 'chat_music') {
+          console.log('123123', data)
+          this.$store.commit('pushAudiosList', data.aplayer_data[0])
         }
       },
       websocketClose (e) {
