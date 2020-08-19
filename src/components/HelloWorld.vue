@@ -55,7 +55,7 @@
             <chat-box v-show="isShowChatBox" :activeIndex="activeIndex" ref="auto"></chat-box>
           </el-main>
           <el-aside width="350px">
-            <chat-music :userInfo="userInfo" :groupInfo="groupInfo" :activeIndex="activeIndex"></chat-music>
+            <chat-music ref="music"></chat-music>
           </el-aside>
         </el-container>
       </el-container>
@@ -98,6 +98,9 @@ export default {
       this.isShowChatBox = true
       this.activeIndex = index
       this.$store.commit('setActiveChannel', channelNo)
+      if (channelNo.startsWith('MC_')) {
+        this.$store.dispatch('websocketSend', 'chat_message#init_data')
+          }
       this.$nextTick(() => {
         this.$refs.auto.$refs.input.focus()
     })

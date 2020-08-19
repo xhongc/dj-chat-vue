@@ -9,7 +9,7 @@
       <el-input style="width: 320px;margin-top: 10px;" placeholder="搜索用户"></el-input>
     </section>
     <section class="user-list">
-      <aplayer :audio="audio" :lrcType="1" />
+      <aplayer ref="aplayer" :audio="audio" :lrcType="1" />
     </section>
   </div>
 </template>
@@ -19,7 +19,10 @@ import {mapGetters} from 'vuex'
 
   export default {
     name: 'ChatMusic',
-    props: ['userInfo', 'groupInfo', 'activeIndex'],
+    mounted () {
+      console.log(this.$refs.aplayer)
+      this.$store.commit('setRefAp', this.$refs.aplayer)
+    },
     data () {
       return {
       }

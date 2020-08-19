@@ -113,7 +113,8 @@
         IndexOfGroupInfo: 'IndexOfGroupInfo',
         chatSocket: 'ChatSocketGetter',
         activeChannelNo: 'activeChannelNo',
-        chatTextArea: 'chatTextAreaGetter'
+        chatTextArea: 'chatTextAreaGetter',
+        ap: 'apGetter'
     }),
       activeGroupInfo () {
         if (this.activeIndex !== -1) {
@@ -127,7 +128,7 @@
         if (this.textarea === '') {
           return
         }
-        // this.websocketSend('chat_message')
+        console.log(this.ap)
         this.$store.commit('setChatTextArea', this.textarea)
         this.$store.dispatch('websocketSend', 'chat_message')
         let data = {
@@ -169,8 +170,14 @@
             this.$store.commit('pushMsgHistory', data)
           }
         } else if (data.action === 'chat_music') {
-          console.log('123123', data)
-          this.$store.commit('pushAudiosList', data.aplayer_data[0])
+          if (data.command === 'add_song') {
+            console.log(data.aplayer_data)
+           this.$store.commit('pushAudiosList', data.aplayer_data[0])
+          } else if (data.command === 'init_data') {
+            this.$store.commit('setAudiosList', data.aplayer_data)
+          } else if (data.command === 'switch_next_song') {
+            this.ap.skipForward()
+          }
         }
       },
       websocketClose (e) {
