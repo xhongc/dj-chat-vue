@@ -63,6 +63,14 @@ export default new Vuex.Store({
     setAudiosList (state, data) {
       state.audiosList = data
     },
+    updateAudiosList (state, data) {
+      state.audiosList[data.index].url = data.url
+    },
+    deleteAudiosList (state, index = 0) {
+      if (index >= 0) {
+       state.audiosList.splice(index, 1)
+      }
+    },
     setRefAp (state, refAplayer) {
       state.ap = refAplayer
     }
@@ -72,9 +80,16 @@ export default new Vuex.Store({
       let Data = {
         'action': action,
         'message': context.state.chatTextArea,
-        'channel_no': context.state.activeChannelNo
+        'channel_no': context.state.activeChannelNo,
+        'now_song_id': context.state.ap ? context.state.ap.currentMusic.id : ''
       }
       context.state.ChatSocket.send(JSON.stringify(Data))
+    },
+    websocketBaseSend (context, data) {
+      data['message'] = context.state.chatTextArea
+      data['channel_no'] = context.state.activeChannelNo
+      data['now_song_id'] = context.state.ap ? context.state.ap.currentMusic.id : ''
+      context.state.ChatSocket.send(JSON.stringify(data))
     }
   }
 })

@@ -48,7 +48,7 @@
               <el-avatar slot="reference" :size="30" :src="content.img_path" shape="square"
                          class="chat-img-right hidden-sm-and-down"></el-avatar>
             </el-popover>
-<!--            <img class="chat-img-right hidden-sm-and-down" :src=content.img_path />-->
+            <!--            <img class="chat-img-right hidden-sm-and-down" :src=content.img_path />-->
           </div>
         </el-col>
       </el-row>
@@ -79,7 +79,7 @@
 <script>
   import store from '@/store/store'
   import {mapGetters} from 'vuex'
-
+  import cookie from '@/store/cookie'
   export default {
     name: 'ChatBox',
     props: ['activeIndex'],
@@ -94,7 +94,7 @@
       this.initWebSocket()
     },
     destroyed () {
-    this.chatSocket.close()
+      this.chatSocket.close()
     },
     computed: {
       msgLists () {
@@ -115,12 +115,12 @@
         activeChannelNo: 'activeChannelNo',
         chatTextArea: 'chatTextAreaGetter',
         ap: 'apGetter'
-    }),
+      }),
       activeGroupInfo () {
         if (this.activeIndex !== -1) {
           return this.IndexOfGroupInfo(this.activeIndex)
         }
-          return ''
+        return ''
       }
     },
     methods: {
@@ -128,7 +128,7 @@
         if (this.textarea === '') {
           return
         }
-        console.log(this.ap)
+        console.log(this.ap.currentMusic)
         this.$store.commit('setChatTextArea', this.textarea)
         this.$store.dispatch('websocketSend', 'chat_message')
         let data = {
@@ -146,6 +146,7 @@
       },
       initWebSocket () {
         let token = `JWT ${store.state.token}`
+        console.log('initWebSocket', cookie.getCookie('token') || '')
         const wsuri = 'ws://127.0.0.1:8099/ws/chat' + '/?token=' + token
         let chatSocket = new WebSocket(wsuri)
         this.$store.commit('setChatSocket', chatSocket)
@@ -171,12 +172,26 @@
           }
         } else if (data.action === 'chat_music') {
           if (data.command === 'add_song') {
-            console.log(data.aplayer_data)
-           this.$store.commit('pushAudiosList', data.aplayer_data[0])
+            this.$store.commit('pushAudiosList', data.aplayer_data[0])
           } else if (data.command === 'init_data') {
             this.$store.commit('setAudiosList', data.aplayer_data)
+            this.$store.dispatch('websocketSend', 'chat_message#ack_song_process')
+            console.log('data.aplayer_data[0].song_process', data.aplayer_data[0].song_process)
+            this.ap.seek(data.aplayer_data[0].song_process)
           } else if (data.command === 'switch_next_song') {
-            this.ap.skipForward()
+            this.$store.commit('deleteAudiosList')
+          } else if (data.command === 'tips') {
+            this.$message({
+              message: data.aplayer_data,
+              type: 'warning'
+            })
+          } else if (data.command === 'reload_song_url') {
+            this.$store.commit('updateAudiosList', {'index': this.ap.currentIndex, 'url': data.aplayer_data})
+          } else if (data.command === 'ack_song_process') {
+            console.log('当前时间', this.ap)
+            this.$store.dispatch('websocketBaseSend', {'action': 'chat_message#syn_song_process', 'current_time': this.ap.currentSettings.currentTime})
+          } else if (data.command === 'syn_song_process') {
+            this.ap.seek(data.aplayer_data)
           }
         }
       },
@@ -189,117 +204,126 @@
 
 <style scoped>
   .chat-box {
-  background-color: whitesmoke;
-  border-radius: 10px;
-  height: 94vh;
-  width: 100%;
-  overflow: hidden;
-  display:flex; /*父元素的定义为flex布局*/
-  flex-direction: column; /*定义排列方向为竖排*/
-  margin-top: 30px;
-}
+    background-color: whitesmoke;
+    border-radius: 10px;
+    height: 94vh;
+    width: 100%;
+    overflow: hidden;
+    display: flex; /*父元素的定义为flex布局*/
+    flex-direction: column; /*定义排列方向为竖排*/
+    margin-top: 30px;
+  }
+
   .chat-header {
-  background-color: white;
-}
+    background-color: white;
+  }
+
   .chat-title {
-  height: 5.92rem;
-  width: 18.75rem;
-  margin-left: 20px;
-  line-height: 60px;
-  position: relative;
-}
-
-.chat-title img {
-  position: absolute;
-  height: 3.75rem;
-  width: 3.75rem;
-  left: 1.25rem;
-  margin-top: 1.25rem;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.music {
-  margin-top: 1.75rem;
-}
-
-.music i {
-  font-size: 1.3rem;
-}
-
-.more-btn {
-  float: right;
-  margin-right: 1.875rem;
-}
-
-.chat-input {
-  width: 100%;
-  bottom: 0;
-}
-
-.input-expend {
-  border-radius: 0.3125rem;
-  background-color: white;
-  height: 2.1875rem;
-  border-top: 1px solid #DCDFE6;
-  padding-left: 0.625rem;
-}
-.chat-msg{
-  margin-top: 40px;
-  margin-left: 30px;
+    height: 5.92rem;
+    width: 18.75rem;
+    margin-left: 20px;
+    line-height: 60px;
+    position: relative;
   }
-.chat-img {
-  background-color: whitesmoke;
-  display: inline-block;
-  vertical-align: bottom;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
-}
-.chat-content {
-  display: inline-block;
-  vertical-align: bottom;
-  border: 1px solid white;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-  border-radius: 20px;
-  background-color: white;
-  margin-left: 10px;
-  /*width: 100px;*/
-  max-width: 20vw;
-  line-height: 28px;
-  text-align: left;
-  padding-left: 20px;
-  padding-right: 20px;
+
+  .chat-title img {
+    position: absolute;
+    height: 3.75rem;
+    width: 3.75rem;
+    left: 1.25rem;
+    margin-top: 1.25rem;
+    border-radius: 50%;
+    cursor: pointer;
   }
-.chat-msg-right{
+
+  .music {
+    margin-top: 1.75rem;
+  }
+
+  .music i {
+    font-size: 1.3rem;
+  }
+
+  .more-btn {
+    float: right;
+    margin-right: 1.875rem;
+  }
+
+  .chat-input {
+    width: 100%;
+    bottom: 0;
+  }
+
+  .input-expend {
+    border-radius: 0.3125rem;
+    background-color: white;
+    height: 2.1875rem;
+    border-top: 1px solid #DCDFE6;
+    padding-left: 0.625rem;
+  }
+
+  .chat-msg {
+    margin-top: 40px;
+    margin-left: 30px;
+  }
+
+  .chat-img {
+    background-color: whitesmoke;
+    display: inline-block;
+    vertical-align: bottom;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
+  }
+
+  .chat-content {
+    display: inline-block;
+    vertical-align: bottom;
+    border: 1px solid white;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    background-color: white;
+    margin-left: 10px;
+    /*width: 100px;*/
+    max-width: 20vw;
+    line-height: 28px;
+    text-align: left;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .chat-msg-right {
     margin-top: 40px;
     margin-right: 30px;
     float: right;
   }
-.chat-content-right{
-  display: inline-block;
-  vertical-align: bottom;
-  border: 1px solid white;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-  border-radius: 20px;
-  background-color: white;
-  margin-right: 10px;
-  /*width: 100px;*/
-  max-width: 20vw;
-  line-height: 28px;
-  text-align: left;
-  padding-left: 20px;
-  padding-right: 20px;
+
+  .chat-content-right {
+    display: inline-block;
+    vertical-align: bottom;
+    border: 1px solid white;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    background-color: white;
+    margin-right: 10px;
+    /*width: 100px;*/
+    max-width: 20vw;
+    line-height: 28px;
+    text-align: left;
+    padding-left: 20px;
+    padding-right: 20px;
   }
-.chat-img-right {
-  background-color: whitesmoke;
-  display: inline-block;
-  vertical-align: bottom;
-  height: 1.875rem;
-  width: 1.875rem;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
+
+  .chat-img-right {
+    background-color: whitesmoke;
+    display: inline-block;
+    vertical-align: bottom;
+    height: 1.875rem;
+    width: 1.875rem;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
   }
-.chat-body{
-  flex:1; /*中间分配剩下的所有空间*/
-  overflow:auto;
-  padding-bottom: 30px;
+
+  .chat-body {
+    flex: 1; /*中间分配剩下的所有空间*/
+    overflow: auto;
+    padding-bottom: 30px;
   }
 </style>

@@ -55,7 +55,7 @@
             <chat-box v-show="isShowChatBox" :activeIndex="activeIndex" ref="auto"></chat-box>
           </el-main>
           <el-aside width="350px">
-            <chat-music ref="music"></chat-music>
+            <chat-music v-if="isShowMusicBox" ref="music"></chat-music>
           </el-aside>
         </el-container>
       </el-container>
@@ -73,17 +73,21 @@
 import {mapGetters} from 'vuex'
 import ChatBox from './ChatBox'
 import ChatMusic from './ChatMusic'
+import GroupMember from './GroupMember'
 export default {
   name: 'HelloWorld',
   components: {
     'chat-box': ChatBox,
-    'chat-music': ChatMusic
+    'chat-music': ChatMusic,
+    'group-member': GroupMember
   },
   data () {
     return {
       drawer: false,
       direction: 'ltr',
       isShowChatBox: false,
+      isShowMusicBox: false,
+      isShowGroupMember: false,
       activeIndex: -1
     }
   },
@@ -100,6 +104,7 @@ export default {
       this.$store.commit('setActiveChannel', channelNo)
       if (channelNo.startsWith('MC_')) {
         this.$store.dispatch('websocketSend', 'chat_message#init_data')
+        this.isShowMusicBox = true
           }
       this.$nextTick(() => {
         this.$refs.auto.$refs.input.focus()

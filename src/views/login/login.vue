@@ -62,7 +62,9 @@ export default {
         password: this.parseWord
       }).then((response) => {
         // 本地存储用户信息
+        cookie.delCookie('token')
         cookie.setCookie('token', response.data.token, 7)
+        console.log(cookie.getCookie('token'))
         // 存储在store
         // 更新store数据
         that.$store.commit('setUserInfo', response.data.token)
