@@ -14,7 +14,9 @@ const state = {
   chatTextArea: '',
   activeChannelNo: -1,
   audiosList: [],
-  ap: null
+  ap: null,
+  rightSide: 'null',
+  musicSource: '网易云音乐'
 }
 export default new Vuex.Store({
   state,
@@ -29,7 +31,9 @@ export default new Vuex.Store({
     activeChannelNo: state => state.activeChannelNo,
     chatTextAreaGetter: state => state.chatTextArea,
     audiosListGetter: state => state.audiosList,
-    apGetter: state => state.ap
+    apGetter: state => state.ap,
+    rightSideGetter: state => state.rightSide,
+    musicSourceGetter: state => state.musicSource
   },
   mutations: {
     setUserInfo (state, token) {
@@ -73,6 +77,12 @@ export default new Vuex.Store({
     },
     setRefAp (state, refAplayer) {
       state.ap = refAplayer
+    },
+    setRightSide (state, data) {
+      state.rightSide = data
+    },
+    setMusicSource (state, data) {
+      state.musicSource = data
     }
   },
   actions: {
@@ -81,7 +91,8 @@ export default new Vuex.Store({
         'action': action,
         'message': context.state.chatTextArea,
         'channel_no': context.state.activeChannelNo,
-        'now_song_id': context.state.ap ? context.state.ap.currentMusic.id : ''
+        'now_song_id': context.state.ap ? context.state.ap.currentMusic.id : '',
+        'select_music_source': context.state.musicSource
       }
       context.state.ChatSocket.send(JSON.stringify(Data))
     },

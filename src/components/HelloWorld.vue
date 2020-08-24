@@ -54,19 +54,13 @@
           <el-main>
             <chat-box v-show="isShowChatBox" :activeIndex="activeIndex" ref="auto"></chat-box>
           </el-main>
-          <el-aside width="350px">
-            <chat-music v-if="isShowMusicBox" ref="music"></chat-music>
+          <el-aside v-show="rightSide!=='null'" width="350px">
+            <chat-music v-if="rightSide==='music'" ref="music"></chat-music>
+            <group-member v-else-if="rightSide==='info'"></group-member>
           </el-aside>
         </el-container>
       </el-container>
     </el-container>
-    <el-drawer
-      title="我是标题"
-      :visible.sync="drawer"
-      :direction='direction'
-      :with-header="false">
-      <span>我来啦!</span>
-    </el-drawer>
   </div>
 </template>
 <script>
@@ -94,7 +88,8 @@ export default {
   computed: {
     ...mapGetters({
       userInfo: 'userInfoGetter',
-      groupInfo: 'GroupInfoGetter'
+      groupInfo: 'GroupInfoGetter',
+      rightSide: 'rightSideGetter'
     })
   },
   methods: {
@@ -103,9 +98,12 @@ export default {
       this.activeIndex = index
       this.$store.commit('setActiveChannel', channelNo)
       if (channelNo.startsWith('MC_')) {
+        this.$store.commit('setRightSide', 'music')
         this.$store.dispatch('websocketSend', 'chat_message#init_data')
         this.isShowMusicBox = true
-          }
+          } else {
+        this.$store.commit('setRightSide', 'info')
+      }
       this.$nextTick(() => {
         this.$refs.auto.$refs.input.focus()
     })
@@ -189,7 +187,7 @@ export default {
 
 .nick-name {
   position: absolute;
-  left: 0px;
+  left: 0;
   width: 12.80rem;
 }
 

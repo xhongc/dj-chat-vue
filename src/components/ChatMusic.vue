@@ -1,11 +1,18 @@
 <template>
   <div class="sidebar-body">
     <section class="user-info">
-      <span class="nick-name">音乐点播</span>
-      <span class="group-btn">
-                <el-button type="info" size="small" plain><i class="el-icon-user-solid"></i></el-button>
-                <el-button type="info" size="small" plain><i class="el-icon-user-solid"></i></el-button>
-              </span>
+      <span class="music-title">音乐</span>
+      <span class="music-btn">
+        <el-dropdown @command="handleCommand">
+              <el-button>
+                {{musicSource}}<i class="el-icon-arrow-down el-icon--right"></i>
+              </el-button>
+              <el-dropdown-menu slot="dropdown">
+                <el-dropdown-item command="网易云音乐">网易云音乐</el-dropdown-item>
+                <el-dropdown-item command="QQ音乐">QQ音乐</el-dropdown-item>
+              </el-dropdown-menu>
+      </el-dropdown>
+      </span>
       <el-input style="width: 320px;margin-top: 10px;" placeholder="搜索用户"></el-input>
     </section>
     <section class="user-list">
@@ -25,7 +32,6 @@
   export default {
     name: 'ChatMusic',
     mounted () {
-      console.log(this.$refs.aplayer)
       this.$store.commit('setRefAp', this.$refs.aplayer)
     },
     data () {
@@ -35,20 +41,24 @@
     },
     computed: {
       ...mapGetters({
-        audio: 'audiosListGetter'
+        audio: 'audiosListGetter',
+        musicSource: 'musicSourceGetter'
       })
     },
     methods: {
       endedEvent (e) {
+        this.$refs.aplayer.seek(this.$refs.aplayer.currentMusic.song_process)
         let lastSongIndex = this.$refs.aplayer.currentIndex - 1
+        console.log(lastSongIndex)
         if (lastSongIndex >= 0) {
           let lastSongId = this.$refs.aplayer.dataSource[lastSongIndex].id
-          this.$store.commit('deleteAudiosList', lastSongIndex)
+          console.log(lastSongId)
           this.$store.dispatch('websocketBaseSend',
             {
               'action': 'chat_message#remove_song',
-              'now_song_id': lastSongId
+              'last_song_id': lastSongId
             })
+          this.$store.commit('deleteAudiosList', lastSongIndex)
         }
       },
       errorEvent (e) {
@@ -59,13 +69,24 @@
         let currTime = parseInt(this.$refs.aplayer.currentSettings.currentTime)
         if (currTime % 5 === 0 && currTime !== this.current_sign) {
           this.current_sign = currTime
-          console.log(currTime)
           this.$store.dispatch('websocketBaseSend', {'action': 'chat_message#update_song_time', 'current_time': currTime})
         }
+      },
+      handleCommand (command) {
+        this.$message('切换至' + command)
+        this.$store.commit('setMusicSource', command)
       }
     }
   }
 </script>
 
 <style>
+  .music-title{
+   position: absolute;
+    left: 0;
+    width: 12.80rem;
+  }
+  .music-btn {
+    margin-left: 11.2rem;
+  }
 </style>

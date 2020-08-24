@@ -12,10 +12,9 @@
       </el-col>
       <el-col :md="12" :lg="12" :xl="12">
         <div class="more-btn hidden-sm-and-down">
-          <el-button size="medium" class="music" @click="drawer = true" plain><i class="el-icon-headset"></i>
-          </el-button>
+          <el-button size="medium" class="music" plain @click="musicBtn"><i class="el-icon-headset"></i></el-button>
           <el-button size="medium" class="music" plain><i class="el-icon-video-play"></i></el-button>
-          <el-button size="medium" class="music" plain><i class="el-icon-arrow-down"></i></el-button>
+          <el-button size="medium" class="music" plain @click="infoBtn"><i class="el-icon-arrow-down"></i></el-button>
         </div>
       </el-col>
     </el-row>
@@ -79,13 +78,14 @@
 <script>
   import store from '@/store/store'
   import {mapGetters} from 'vuex'
-  import cookie from '@/store/cookie'
   export default {
     name: 'ChatBox',
     props: ['activeIndex'],
     data () {
       return {
-        textarea: ''
+        textarea: '',
+        isConnect: false,
+        rec: ''
       }
     },
     created () {
@@ -114,7 +114,8 @@
         chatSocket: 'ChatSocketGetter',
         activeChannelNo: 'activeChannelNo',
         chatTextArea: 'chatTextAreaGetter',
-        ap: 'apGetter'
+        ap: 'apGetter',
+        rightSide: 'rightSideGetter'
       }),
       activeGroupInfo () {
         if (this.activeIndex !== -1) {
@@ -128,7 +129,6 @@
         if (this.textarea === '') {
           return
         }
-        console.log(this.ap.currentMusic)
         this.$store.commit('setChatTextArea', this.textarea)
         this.$store.dispatch('websocketSend', 'chat_message')
         let data = {
@@ -139,6 +139,7 @@
         }
         this.$store.commit('pushMsgHistory', data)
         this.textarea = ''
+        this.$store.commit('setChatTextArea', this.textarea)
         this.$nextTick(() => {
           let msg = this.$refs.chat_body
           msg.scrollTop = msg.scrollHeight // 滚动高度
@@ -146,7 +147,9 @@
       },
       initWebSocket () {
         let token = `JWT ${store.state.token}`
-        console.log('initWebSocket', cookie.getCookie('token') || '')
+        if (token === 'JWT ') {
+          this.$router.push({name: 'login'})
+        }
         const wsuri = 'ws://127.0.0.1:8099/ws/chat' + '/?token=' + token
         let chatSocket = new WebSocket(wsuri)
         this.$store.commit('setChatSocket', chatSocket)
@@ -156,11 +159,12 @@
         this.chatSocket.onclose = this.websocketClose
       },
       websocketOnopen () {
-        // this.websocketSend('first_init')
+        this.isConnect = true
         this.$store.dispatch('websocketSend', 'first_init')
       },
       websocketOnerror () {
-        this.initWebSocket()
+        this.isConnect = false
+        this.reConnect()
       },
       websocketOnmessage (e) {
         const data = JSON.parse(e.data)
@@ -174,10 +178,11 @@
           if (data.command === 'add_song') {
             this.$store.commit('pushAudiosList', data.aplayer_data[0])
           } else if (data.command === 'init_data') {
+            if (data.aplayer_data.length === 0) {
+              return
+            }
             this.$store.commit('setAudiosList', data.aplayer_data)
             this.$store.dispatch('websocketSend', 'chat_message#ack_song_process')
-            console.log('data.aplayer_data[0].song_process', data.aplayer_data[0].song_process)
-            this.ap.seek(data.aplayer_data[0].song_process)
           } else if (data.command === 'switch_next_song') {
             this.$store.commit('deleteAudiosList')
           } else if (data.command === 'tips') {
@@ -188,7 +193,6 @@
           } else if (data.command === 'reload_song_url') {
             this.$store.commit('updateAudiosList', {'index': this.ap.currentIndex, 'url': data.aplayer_data})
           } else if (data.command === 'ack_song_process') {
-            console.log('当前时间', this.ap)
             this.$store.dispatch('websocketBaseSend', {'action': 'chat_message#syn_song_process', 'current_time': this.ap.currentSettings.currentTime})
           } else if (data.command === 'syn_song_process') {
             this.ap.seek(data.aplayer_data)
@@ -196,7 +200,32 @@
         }
       },
       websocketClose (e) {
+        this.isConnect = false
         console.log('断开连接', e)
+        this.reConnect()
+      },
+      reConnect () {
+        if (this.isConnect) return
+        this.rec && clearTimeout(this.rec)
+        // 延迟5秒重连  避免过多次过频繁请求重连
+        console.log('延迟5秒重连  避免过多次过频繁请求重连')
+        this.rec = setTimeout(() => {
+          this.initWebSocket()
+        }, 5000)
+      },
+      musicBtn () {
+        let action = 'music'
+        if (this.rightSide === 'music') {
+          action = 'null'
+        }
+        this.$store.commit('setRightSide', action)
+      },
+      infoBtn () {
+        let action = 'info'
+        if (this.rightSide === 'info') {
+          action = 'null'
+        }
+        this.$store.commit('setRightSide', action)
       }
     }
   }
