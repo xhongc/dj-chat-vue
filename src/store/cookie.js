@@ -3,9 +3,7 @@ var cookie = {
     var exdate = new Date()
     exdate.setTime(exdate.getTime() + expiredays)
     exdate.setDate(exdate.getDate() + expiredays)
-    console.log(name + '=' + escape(value) + ((expiredays == null) ? '' : ';expires=' + exdate.toGMTString()))
     document.cookie = name + '=' + escape(value) + ((expiredays == null) ? '' : ';expires=' + exdate.toGMTString())
-    console.log(name + '=' + escape(value) + ((expiredays == null) ? '' : ';expires=' + exdate.toGMTString()))
   },
   getCookie (name) {
     var reg = new RegExp('(^| )' + name + '=([^;]*)(;|$)')

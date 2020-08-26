@@ -39,24 +39,24 @@
               <el-input style="width: 320px;margin-top: 10px;" placeholder="搜索用户"></el-input>
             </section>
             <section class="user-list">
-              <div v-for="(item,index) in groupInfo" :key="'chat-list'+index" @click="showChatBox(index, item.channel_no)" class="user-per" :class="{'active':activeIndex===index}">
+              <div v-for="(item,channel_no,index) in groupInfoDict" :key="'chat-list'+index" @click="showChatBox(index, channel_no)" class="user-per" :class="{'active':activeIndex===index}">
                 <el-avatar size="small" :src=item.img_path class="ava-img" @error=false>
                   <el-avatar> {{item.room_name[0]}} </el-avatar>
                 </el-avatar>
                 <div class="group-title">{{item.room_name}}</div>
                 <div class="group-info">{{item.room_description}}</div>
-                <el-badge :value="100" :max="10" class="group-badge"></el-badge>
+                <el-badge :value="item.unread_no" :max="100" class="group-badge"></el-badge>
               </div>
             </section>
           </div>
         </el-aside>
         <el-container>
           <el-main>
-            <chat-box v-show="isShowChatBox" :activeIndex="activeIndex" ref="auto"></chat-box>
+            <chat-box v-show="isShowChatBox" :activeGroupInfo="activeGroupInfo" ref="auto"></chat-box>
           </el-main>
           <el-aside v-show="rightSide!=='null'" width="350px">
             <chat-music v-if="rightSide==='music'" ref="music"></chat-music>
-            <group-member v-else-if="rightSide==='info'"></group-member>
+            <group-member v-else-if="rightSide==='info'" :activeGroupInfo="activeGroupInfo"></group-member>
           </el-aside>
         </el-container>
       </el-container>
@@ -89,14 +89,23 @@ export default {
     ...mapGetters({
       userInfo: 'userInfoGetter',
       groupInfo: 'GroupInfoGetter',
-      rightSide: 'rightSideGetter'
-    })
+      groupInfoDict: 'GroupInfoDictGetter',
+      rightSide: 'rightSideGetter',
+      IndexOfGroupInfo: 'IndexOfGroupInfo'
+    }),
+    activeGroupInfo () {
+        if (this.activeIndex !== -1) {
+          return this.IndexOfGroupInfo(this.activeIndex)
+        }
+        return ''
+      }
   },
   methods: {
     showChatBox (index, channelNo) {
       this.isShowChatBox = true
       this.activeIndex = index
       this.$store.commit('setActiveChannel', channelNo)
+      this.$store.commit('clearGroupInfoUnreadNo', channelNo)
       if (channelNo.startsWith('MC_')) {
         this.$store.commit('setRightSide', 'music')
         this.$store.dispatch('websocketSend', 'chat_message#init_data')

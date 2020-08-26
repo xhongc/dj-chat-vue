@@ -5,3 +5,6 @@ let host = 'http://127.0.0.1:8099'
 export const login = params => {
   return axios.post(`${host}/api-token-auth/`, params)
 }
+export const firstInit = params => {
+  return axios.get(`${host}/api/first_init`, params)
+}

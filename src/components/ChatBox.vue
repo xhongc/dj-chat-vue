@@ -78,9 +78,14 @@
 <script>
   import store from '@/store/store'
   import {mapGetters} from 'vuex'
+  import {firstInit} from '@/api/api'
+  import LoadMore from './LoadMore'
   export default {
     name: 'ChatBox',
-    props: ['activeIndex'],
+    props: ['activeGroupInfo'],
+    components: {
+      'load-more': LoadMore
+    },
     data () {
       return {
         textarea: '',
@@ -89,6 +94,9 @@
       }
     },
     created () {
+      firstInit().then((response) => {
+        this.$store.commit('setInitInfo', response.data.extra_data)
+      })
     },
     mounted () {
       this.initWebSocket()
@@ -105,24 +113,17 @@
           let msg = this.$refs.chat_body
           msg.scrollTop = msg.scrollHeight // 滚动高度
         })
-        return this.msgHistory[this.activeChannelNo]
+        return this.msgHistory[this.activeChannelNo].slice(-20)
       },
       ...mapGetters({
         msgHistory: 'msgHistoryGetter',
         userInfo: 'userInfoGetter',
-        IndexOfGroupInfo: 'IndexOfGroupInfo',
         chatSocket: 'ChatSocketGetter',
         activeChannelNo: 'activeChannelNo',
         chatTextArea: 'chatTextAreaGetter',
         ap: 'apGetter',
         rightSide: 'rightSideGetter'
-      }),
-      activeGroupInfo () {
-        if (this.activeIndex !== -1) {
-          return this.IndexOfGroupInfo(this.activeIndex)
-        }
-        return ''
-      }
+      })
     },
     methods: {
       sendMessage () {
@@ -159,30 +160,32 @@
         this.chatSocket.onclose = this.websocketClose
       },
       websocketOnopen () {
+        console.log('连接成功')
         this.isConnect = true
-        this.$store.dispatch('websocketSend', 'first_init')
       },
       websocketOnerror () {
         this.isConnect = false
         this.reConnect()
       },
       websocketOnmessage (e) {
+        // 自己看到和 自己看不到判断
         const data = JSON.parse(e.data)
-        if (data.action === 'first_init') {
-          this.$store.commit('setInitInfo', data.extra_data)
-        } else if (data.action === 'chat_message') {
+        if (data.action === 'chat_message') {
           if (data.user_uid !== this.userInfo.unicode_id) {
             this.$store.commit('pushMsgHistory', data)
+            this.$store.commit('setGroupInfoUnreadNo', data)
           }
         } else if (data.action === 'chat_music') {
           if (data.command === 'add_song') {
             this.$store.commit('pushAudiosList', data.aplayer_data[0])
           } else if (data.command === 'init_data') {
-            if (data.aplayer_data.length === 0) {
+            if (data.user_uid === this.userInfo.unicode_id) {
+              if (data.aplayer_data.length === 0) {
               return
             }
             this.$store.commit('setAudiosList', data.aplayer_data)
             this.$store.dispatch('websocketSend', 'chat_message#ack_song_process')
+            }
           } else if (data.command === 'switch_next_song') {
             this.$store.commit('deleteAudiosList')
           } else if (data.command === 'tips') {
@@ -193,7 +196,11 @@
           } else if (data.command === 'reload_song_url') {
             this.$store.commit('updateAudiosList', {'index': this.ap.currentIndex, 'url': data.aplayer_data})
           } else if (data.command === 'ack_song_process') {
-            this.$store.dispatch('websocketBaseSend', {'action': 'chat_message#syn_song_process', 'current_time': this.ap.currentSettings.currentTime})
+            // console.log('ack_song_process', this.activeChannelNo)
+            if (this.activeChannelNo.startsWith('MC_')) {
+              console.log('ack_song_process', this.activeChannelNo)
+              this.$store.dispatch('websocketBaseSend', {'action': 'chat_message#syn_song_process', 'current_time': this.ap.currentSettings.currentTime})
+            }
           } else if (data.command === 'syn_song_process') {
             this.ap.seek(data.aplayer_data)
           }
@@ -226,6 +233,10 @@
           action = 'null'
         }
         this.$store.commit('setRightSide', action)
+      },
+      onScrollBottom () {
+        console.log('gundongle')
+        this.$refs.LoadMore.finish = true
       }
     }
   }
