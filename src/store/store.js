@@ -4,7 +4,6 @@ import Vuex from 'vuex'
 import cookie from './cookie'
 
 Vue.use(Vuex)
-
 const state = {
   userInfo: {},
   GroupInfo: {},
@@ -17,7 +16,8 @@ const state = {
   audiosList: [],
   ap: null,
   rightSide: 'null',
-  musicSource: cookie.getCookie('musicSource') || '网易云音乐'
+  musicSource: cookie.getCookie('musicSource') || '网易云音乐',
+  loadStatusDict: {}
 }
 export default new Vuex.Store({
   state,
@@ -35,7 +35,10 @@ export default new Vuex.Store({
     audiosListGetter: state => state.audiosList,
     apGetter: state => state.ap,
     rightSideGetter: state => state.rightSide,
-    musicSourceGetter: state => unescape(state.musicSource)
+    musicSourceGetter: state => unescape(state.musicSource),
+    IndexOfLoadGetter: (state) => (index) => {
+      return state.loadStatusDict[index]
+    }
   },
   mutations: {
     setUserInfo (state, token) {
@@ -46,15 +49,25 @@ export default new Vuex.Store({
       state.GroupInfo = InitInfo.room_info
       let msgHistoryDict = {'-1': '-1'}
       let GroupInfoDict = {}
+      let loadStatusDict = {}
       for (let i = 0; i < state.GroupInfo.length; i++) {
         msgHistoryDict[state.GroupInfo[i].channel_no] = state.GroupInfo[i].said_to_room.reverse() || []
         GroupInfoDict[state.GroupInfo[i].channel_no] = state.GroupInfo[i]
+        loadStatusDict[state.GroupInfo[i].channel_no] = {
+          loading: false,
+          finish: false,
+          page: 2
+        }
       }
       state.msgHistory = msgHistoryDict
       state.GroupInfoDict = GroupInfoDict
+      state.loadStatusDict = loadStatusDict
     },
     pushMsgHistory (state, data) {
       state.msgHistory[data.channel_no].push(data)
+    },
+    pushMsgHistoryHead (state, data) {
+      state.msgHistory[data.channel_no] = data.data.concat(state.msgHistory[data.channel_no])
     },
     setChatSocket (state, ChatSocket) {
       state.ChatSocket = ChatSocket
@@ -76,7 +89,7 @@ export default new Vuex.Store({
     },
     deleteAudiosList (state, index = 0) {
       if (index >= 0) {
-       state.audiosList.splice(index, 1)
+        state.audiosList.splice(index, 1)
       }
     },
     setRefAp (state, refAplayer) {
@@ -96,6 +109,16 @@ export default new Vuex.Store({
     },
     clearGroupInfoUnreadNo (state, channelNo) {
       state.GroupInfoDict[channelNo].unread_no = ''
+    },
+    setLoad (state, data) {
+      state.loadStatusDict[state.activeChannelNo].loading = data
+    },
+    setFinish (state, data) {
+      state.loadStatusDict[state.activeChannelNo].finish = data
+    },
+    setPage (state, data) {
+      console.log('state.activeChannelNo', state.activeChannelNo)
+      state.loadStatusDict[state.activeChannelNo].page = data
     }
   },
   actions: {

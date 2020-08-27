@@ -18,7 +18,10 @@
         </div>
       </el-col>
     </el-row>
-    <div class="chat-body" ref="chat_body">
+    <div class="chat-body" ref="chat_body" v-scroll="loadMore">
+      <div v-if="loading" class="more"><i class="el-icon-loading" style="font-size: 32px"></i></div>
+      <div v-if="page>=3&&!finish" class="more" @click="loadMore">查看更多</div>
+      <div v-if="finish" class="no-more">没有更多了</div>
       <el-row v-for="(content,index) in msgLists" :key="'content'+index" :gutter="10">
         <el-col v-if="userInfo.unicode_id===content.user_uid" class="chat-msg" :xs="24" :sm="24" :md="12" :lg="12"
                 :xl="12">
@@ -64,12 +67,12 @@
         placeholder="chàng suǒ yù yán"
         maxlength="811"
         show-word-limit
-        v-model="textarea"
+        v-model="ChatTextArea"
         rows=3
         resize=none
         :autofocus="true"
         @keydown.enter.native.exact.prevent="sendMessage"
-        v-on:keyup.alt.enter.native="textarea+='\n'"
+        v-on:keyup.alt.enter.native="ChatTextArea+='\n'"
       ></el-input>
     </div>
   </div>
@@ -78,7 +81,7 @@
 <script>
   import store from '@/store/store'
   import {mapGetters} from 'vuex'
-  import {firstInit} from '@/api/api'
+  import {getChatLog} from '@/api/api'
   import LoadMore from './LoadMore'
   export default {
     name: 'ChatBox',
@@ -88,15 +91,11 @@
     },
     data () {
       return {
-        textarea: '',
         isConnect: false,
         rec: ''
       }
     },
     created () {
-      firstInit().then((response) => {
-        this.$store.commit('setInitInfo', response.data.extra_data)
-      })
     },
     mounted () {
       this.initWebSocket()
@@ -104,16 +103,66 @@
     destroyed () {
       this.chatSocket.close()
     },
+    directives: {
+      scroll: {
+        bind: (el, binding) => {
+          console.log('asd', this)
+          el.addEventListener('scroll', () => {
+            if (el.scrollTop < 5) {
+              let loadData = binding.value
+              loadData()
+            }
+          })
+        }
+      }
+    },
     computed: {
       msgLists () {
         if (this.activeChannelNo === -1) {
           return {}
         }
-        this.$nextTick(() => {
-          let msg = this.$refs.chat_body
-          msg.scrollTop = msg.scrollHeight // 滚动高度
-        })
-        return this.msgHistory[this.activeChannelNo].slice(-20)
+        return this.msgHistory[this.activeChannelNo]
+      },
+      loading: {
+        get () {
+          if (this.activeChannelNo === -1) {
+          return false
+        }
+        return this.IndexOfLoad(this.activeChannelNo).loading
+        },
+        set (val) {
+          this.$store.commit('setLoad', val)
+        }
+      },
+      finish: {
+        get () {
+          if (this.activeChannelNo === -1 || this.msgLists.length < 20) {
+          return 'null'
+        }
+        return this.IndexOfLoad(this.activeChannelNo).finish
+        },
+        set (val) {
+          this.$store.commit('setFinish', val)
+        }
+      },
+      page: {
+        get () {
+          if (this.activeChannelNo === -1) {
+          return 2
+        }
+        return this.IndexOfLoad(this.activeChannelNo).page
+        },
+        set (val) {
+          this.$store.commit('setPage', val)
+        }
+      },
+      ChatTextArea: {
+        get () {
+          return this.chatTextArea
+        },
+        set (val) {
+          this.$store.commit('setChatTextArea', val)
+        }
       },
       ...mapGetters({
         msgHistory: 'msgHistoryGetter',
@@ -122,25 +171,24 @@
         activeChannelNo: 'activeChannelNo',
         chatTextArea: 'chatTextAreaGetter',
         ap: 'apGetter',
-        rightSide: 'rightSideGetter'
+        rightSide: 'rightSideGetter',
+        IndexOfLoad: 'IndexOfLoadGetter'
       })
     },
     methods: {
       sendMessage () {
-        if (this.textarea === '') {
+        if (this.ChatTextArea === '') {
           return
         }
-        this.$store.commit('setChatTextArea', this.textarea)
         this.$store.dispatch('websocketSend', 'chat_message')
         let data = {
-          'message': this.textarea,
+          'message': this.ChatTextArea,
           'img_path': this.userInfo.img_path,
           'user_uid': this.userInfo.unicode_id,
           'channel_no': this.activeChannelNo
         }
         this.$store.commit('pushMsgHistory', data)
-        this.textarea = ''
-        this.$store.commit('setChatTextArea', this.textarea)
+        this.ChatTextArea = ''
         this.$nextTick(() => {
           let msg = this.$refs.chat_body
           msg.scrollTop = msg.scrollHeight // 滚动高度
@@ -165,7 +213,6 @@
       },
       websocketOnerror () {
         this.isConnect = false
-        this.reConnect()
       },
       websocketOnmessage (e) {
         // 自己看到和 自己看不到判断
@@ -234,9 +281,27 @@
         }
         this.$store.commit('setRightSide', action)
       },
-      onScrollBottom () {
-        console.log('gundongle')
-        this.$refs.LoadMore.finish = true
+      loadMore () {
+        if (this.finish || this.finish === 'null') {
+          return
+        }
+        this.loading = true
+        this.loadData && clearTimeout(this.loadData)
+        this.loadData = setTimeout(() => {
+          getChatLog({
+            said_to_room__channel_no: this.activeChannelNo,
+            page: this.page
+          }).then((response) => {
+            this.$store.commit('pushMsgHistoryHead', {'data': response.data.results, 'channel_no': this.activeChannelNo})
+            this.loading = false
+            this.page = this.page + 1
+          }).catch((error) => {
+            console.log(error)
+            this.loading = false
+            this.finish = true
+          })
+        }, 500)
+        console.log(this.loading)
       }
     }
   }
@@ -365,5 +430,16 @@
     flex: 1; /*中间分配剩下的所有空间*/
     overflow: auto;
     padding-bottom: 30px;
+  }
+  .more {
+    margin-top: 10px;
+    text-align: center;
+    color: cornflowerblue;
+    cursor: pointer;
+  }
+  .no-more{
+    margin-top: 10px;
+    text-align: center;
+    color: gray;
   }
 </style>

@@ -68,6 +68,8 @@ import {mapGetters} from 'vuex'
 import ChatBox from './ChatBox'
 import ChatMusic from './ChatMusic'
 import GroupMember from './GroupMember'
+import {firstInit} from '@/api/api'
+
 export default {
   name: 'HelloWorld',
   components: {
@@ -84,6 +86,11 @@ export default {
       isShowGroupMember: false,
       activeIndex: -1
     }
+  },
+  created () {
+    firstInit().then((response) => {
+        this.$store.commit('setInitInfo', response.data.extra_data)
+      })
   },
   computed: {
     ...mapGetters({
@@ -115,6 +122,8 @@ export default {
       }
       this.$nextTick(() => {
         this.$refs.auto.$refs.input.focus()
+        let chatBody = this.$refs.auto.$refs.chat_body
+        chatBody.scrollTop = chatBody.scrollHeight
     })
     }
   }
