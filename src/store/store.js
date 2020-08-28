@@ -17,7 +17,9 @@ const state = {
   ap: null,
   rightSide: 'null',
   musicSource: cookie.getCookie('musicSource') || '网易云音乐',
-  loadStatusDict: {}
+  loadStatusDict: {},
+  memberDict: {},
+  alreadyMember: []
 }
 export default new Vuex.Store({
   state,
@@ -35,6 +37,7 @@ export default new Vuex.Store({
     audiosListGetter: state => state.audiosList,
     apGetter: state => state.ap,
     rightSideGetter: state => state.rightSide,
+    memberDictGetter: state => state.memberDict,
     musicSourceGetter: state => unescape(state.musicSource),
     IndexOfLoadGetter: (state) => (index) => {
       return state.loadStatusDict[index]
@@ -119,6 +122,15 @@ export default new Vuex.Store({
     setPage (state, data) {
       console.log('state.activeChannelNo', state.activeChannelNo)
       state.loadStatusDict[state.activeChannelNo].page = data
+    },
+    setMembersDict (state, activeGroupInfo) {
+      let channelNo = state.activeChannelNo
+      if (state.alreadyMember.indexOf(channelNo) === -1) {
+        state.alreadyMember.push(channelNo)
+        activeGroupInfo.members.forEach((item) => {
+          state.memberDict[item.unicode_id] = item
+        })
+      }
     }
   },
   actions: {

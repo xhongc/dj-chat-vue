@@ -5,15 +5,11 @@
         <el-aside width="70px" style="background-color: white">
           <div class="slider">
             <div>
-              <i class="el-icon-chat-dot-round nav-first"></i>
+              <el-avatar class="nav-first" :src="userInfo.img_path"></el-avatar>
             </div>
-            <div>
+            <div class="nav-3th">
               <i class="el-icon-chat-line-square nav"></i>
-            </div>
-            <div>
               <i class="el-icon-user nav"></i>
-            </div>
-            <div>
               <i class="el-icon-star-off nav"></i>
             </div>
             <div style="flex:1;overflow: hidden"></div>
@@ -113,6 +109,7 @@ export default {
       this.activeIndex = index
       this.$store.commit('setActiveChannel', channelNo)
       this.$store.commit('clearGroupInfoUnreadNo', channelNo)
+      this.$store.commit('setMembersDict', this.activeGroupInfo)
       if (channelNo.startsWith('MC_')) {
         this.$store.commit('setRightSide', 'music')
         this.$store.dispatch('websocketSend', 'chat_message#init_data')
@@ -155,14 +152,12 @@ export default {
   margin-right: 0 !important;
 }
 .nav-first {
-  width: 70px;
-  height: 60px;
+  width: 68px;
+  height: 68px;
   font-size: 38px;
   display: block;
-  margin-bottom: 17px;
-  padding-top: 17px;
-  background-color: #67C23A;
-  color: white;
+  opacity:0.9;
+  filter:alpha(opacity=90);
 }
 
 .nav {
@@ -284,4 +279,8 @@ i:hover {
 .el-col {
   border-radius: 3px;
 }
+  .nav-3th{
+    position: absolute;
+    top:120px
+  }
 </style>

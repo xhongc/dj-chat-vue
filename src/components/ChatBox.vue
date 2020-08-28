@@ -21,36 +21,22 @@
     <div class="chat-body" ref="chat_body" v-scroll="loadMore">
       <div v-if="loading" class="more"><i class="el-icon-loading" style="font-size: 32px"></i></div>
       <div v-if="page>=3&&!finish" class="more" @click="loadMore">查看更多</div>
-      <div v-if="finish" class="no-more">没有更多了</div>
+      <div v-if="finish&&finish!=='null'" class="no-more">没有更多了</div>
       <el-row v-for="(content,index) in msgLists" :key="'content'+index" :gutter="10">
+        <el-divider v-if="index%10===0" class="chat-time-info">{{content.chat_datetime}}</el-divider>
         <el-col v-if="userInfo.unicode_id===content.user_uid" class="chat-msg" :xs="24" :sm="24" :md="12" :lg="12"
                 :xl="12">
-          <div>
-            <el-popover
-              placement="right"
-              width="60px"
-              trigger="click">
-              <el-avatar :size="60" :src="content.img_path" shape="square"
-                         class="chat-img hidden-sm-and-down"></el-avatar>
-              <el-avatar slot="reference" :size="30" :src="content.img_path" shape="square"
-                         class="chat-img hidden-sm-and-down"></el-avatar>
-            </el-popover>
+          <div @click="showCard(content.user_uid)">
+            <el-avatar :size="30" :src="content.img_path" shape="square"
+                       class="chat-img hidden-sm-and-down"></el-avatar>
             <div class="chat-content">{{content.message}}</div>
           </div>
         </el-col>
         <el-col v-else class="chat-msg-right" :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
-          <div style="float: right">
+          <div style="float: right" @click="showCard(content.user_uid)">
             <div class="chat-content-right">{{content.message}}</div>
-            <el-popover
-              placement="right"
-              width="60px"
-              trigger="click">
-              <el-avatar :size="60" :src="content.img_path" shape="square"
-                         class="chat-img-right hidden-sm-and-down"></el-avatar>
-              <el-avatar slot="reference" :size="30" :src="content.img_path" shape="square"
-                         class="chat-img-right hidden-sm-and-down"></el-avatar>
-            </el-popover>
-            <!--            <img class="chat-img-right hidden-sm-and-down" :src=content.img_path />-->
+            <el-avatar :size="30" :src="content.img_path" shape="square"
+                       class="chat-img-right hidden-sm-and-down"></el-avatar>
           </div>
         </el-col>
       </el-row>
@@ -75,6 +61,9 @@
         v-on:keyup.alt.enter.native="ChatTextArea+='\n'"
       ></el-input>
     </div>
+    <div v-if="isShowCard" class="popBox" ref="popBox">
+      <user-card :userInfo="memberDict[showUID]"></user-card>
+    </div>
   </div>
 </template>
 
@@ -82,23 +71,34 @@
   import store from '@/store/store'
   import {mapGetters} from 'vuex'
   import {getChatLog} from '@/api/api'
-  import LoadMore from './LoadMore'
+  import UserCard from './UserCard'
+
   export default {
     name: 'ChatBox',
     props: ['activeGroupInfo'],
     components: {
-      'load-more': LoadMore
+      'user-card': UserCard
     },
     data () {
       return {
         isConnect: false,
-        rec: ''
+        rec: '',
+        isShowCard: false,
+        showUID: ''
       }
     },
     created () {
     },
     mounted () {
       this.initWebSocket()
+      let _this = this
+      document.addEventListener('click', function (e) {
+        console.log(_this.$refs.popBox, e.target)
+        if (_this.$refs.popBox.contains(e.target)) {
+          return
+        }
+        this.isShowCard = false
+      })
     },
     destroyed () {
       this.chatSocket.close()
@@ -126,9 +126,9 @@
       loading: {
         get () {
           if (this.activeChannelNo === -1) {
-          return false
-        }
-        return this.IndexOfLoad(this.activeChannelNo).loading
+            return false
+          }
+          return this.IndexOfLoad(this.activeChannelNo).loading
         },
         set (val) {
           this.$store.commit('setLoad', val)
@@ -137,9 +137,9 @@
       finish: {
         get () {
           if (this.activeChannelNo === -1 || this.msgLists.length < 20) {
-          return 'null'
-        }
-        return this.IndexOfLoad(this.activeChannelNo).finish
+            return 'null'
+          }
+          return this.IndexOfLoad(this.activeChannelNo).finish
         },
         set (val) {
           this.$store.commit('setFinish', val)
@@ -148,9 +148,9 @@
       page: {
         get () {
           if (this.activeChannelNo === -1) {
-          return 2
-        }
-        return this.IndexOfLoad(this.activeChannelNo).page
+            return 2
+          }
+          return this.IndexOfLoad(this.activeChannelNo).page
         },
         set (val) {
           this.$store.commit('setPage', val)
@@ -172,7 +172,8 @@
         chatTextArea: 'chatTextAreaGetter',
         ap: 'apGetter',
         rightSide: 'rightSideGetter',
-        IndexOfLoad: 'IndexOfLoadGetter'
+        IndexOfLoad: 'IndexOfLoadGetter',
+        memberDict: 'memberDictGetter'
       })
     },
     methods: {
@@ -221,6 +222,10 @@
           if (data.user_uid !== this.userInfo.unicode_id) {
             this.$store.commit('pushMsgHistory', data)
             this.$store.commit('setGroupInfoUnreadNo', data)
+            this.$nextTick(() => {
+              let msg = this.$refs.chat_body
+              msg.scrollTop = msg.scrollHeight // 滚动高度
+            })
           }
         } else if (data.action === 'chat_music') {
           if (data.command === 'add_song') {
@@ -228,10 +233,10 @@
           } else if (data.command === 'init_data') {
             if (data.user_uid === this.userInfo.unicode_id) {
               if (data.aplayer_data.length === 0) {
-              return
-            }
-            this.$store.commit('setAudiosList', data.aplayer_data)
-            this.$store.dispatch('websocketSend', 'chat_message#ack_song_process')
+                return
+              }
+              this.$store.commit('setAudiosList', data.aplayer_data)
+              this.$store.dispatch('websocketSend', 'chat_message#ack_song_process')
             }
           } else if (data.command === 'switch_next_song') {
             this.$store.commit('deleteAudiosList')
@@ -246,7 +251,10 @@
             // console.log('ack_song_process', this.activeChannelNo)
             if (this.activeChannelNo.startsWith('MC_')) {
               console.log('ack_song_process', this.activeChannelNo)
-              this.$store.dispatch('websocketBaseSend', {'action': 'chat_message#syn_song_process', 'current_time': this.ap.currentSettings.currentTime})
+              this.$store.dispatch('websocketBaseSend', {
+                'action': 'chat_message#syn_song_process',
+                'current_time': this.ap.currentSettings.currentTime
+              })
             }
           } else if (data.command === 'syn_song_process') {
             this.ap.seek(data.aplayer_data)
@@ -292,7 +300,10 @@
             said_to_room__channel_no: this.activeChannelNo,
             page: this.page
           }).then((response) => {
-            this.$store.commit('pushMsgHistoryHead', {'data': response.data.results, 'channel_no': this.activeChannelNo})
+            this.$store.commit('pushMsgHistoryHead', {
+              'data': response.data.results,
+              'channel_no': this.activeChannelNo
+            })
             this.loading = false
             this.page = this.page + 1
           }).catch((error) => {
@@ -302,6 +313,11 @@
           })
         }, 500)
         console.log(this.loading)
+      },
+      showCard (showUID) {
+        console.log('1asd', showUID)
+        this.isShowCard = true
+        this.showUID = showUID
       }
     }
   }
@@ -431,15 +447,34 @@
     overflow: auto;
     padding-bottom: 30px;
   }
+
   .more {
     margin-top: 10px;
     text-align: center;
     color: cornflowerblue;
     cursor: pointer;
   }
-  .no-more{
+
+  .no-more {
     margin-top: 10px;
     text-align: center;
     color: gray;
+  }
+
+  .chat-time-info {
+    text-align: center;
+    font-size: 8px;
+    color: rgba(22, 22, 22, 0.3);
+  }
+
+  .el-divider__text {
+    background-color: whitesmoke;
+    color: rgba(22, 22, 22, 0.3);
+  }
+
+  .popBox {
+    position: absolute;
+    top: 50%;
+    left: 50%;
   }
 </style>
