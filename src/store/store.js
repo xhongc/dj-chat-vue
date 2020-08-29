@@ -140,7 +140,7 @@ export default new Vuex.Store({
         'message': context.state.chatTextArea,
         'channel_no': context.state.activeChannelNo,
         'now_song_id': context.state.ap ? context.state.ap.currentMusic.id : '',
-        'select_music_source': context.state.musicSource,
+        'select_music_source': unescape(context.state.musicSource),
         'img_path': context.state.userInfo.img_path
       }
       context.state.ChatSocket.send(JSON.stringify(Data))

@@ -19,6 +19,15 @@
       </el-col>
     </el-row>
     <div class="chat-body" ref="chat_body" v-scroll="loadMore">
+      <el-dialog
+        :visible.sync="isShowCard"
+        width="30%"
+        top="10%"
+        :modal=false
+        :show-close=false
+      >
+        <user-card :userInfo="memberDict[showUID]"></user-card>
+      </el-dialog>
       <div v-if="loading" class="more"><i class="el-icon-loading" style="font-size: 32px"></i></div>
       <div v-if="page>=3&&!finish" class="more" @click="loadMore">查看更多</div>
       <div v-if="finish&&finish!=='null'" class="no-more">没有更多了</div>
@@ -26,26 +35,30 @@
         <el-divider v-if="index%10===0" class="chat-time-info">{{content.chat_datetime}}</el-divider>
         <el-col v-if="userInfo.unicode_id===content.user_uid" class="chat-msg" :xs="24" :sm="24" :md="12" :lg="12"
                 :xl="12">
-          <div @click="showCard(content.user_uid)">
-            <el-avatar :size="30" :src="content.img_path" shape="square"
-                       class="chat-img hidden-sm-and-down"></el-avatar>
+          <div>
+            <div @click="showCard(content.user_uid)" style="display: inline">
+              <el-avatar :size="30" :src="content.img_path" shape="square"
+                         class="chat-img hidden-sm-and-down"></el-avatar>
+            </div>
             <div class="chat-content">{{content.message}}</div>
           </div>
         </el-col>
         <el-col v-else class="chat-msg-right" :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
-          <div style="float: right" @click="showCard(content.user_uid)">
+          <div style="float: right">
             <div class="chat-content-right">{{content.message}}</div>
+            <div @click="showCard(content.user_uid)" style="display: inline">
             <el-avatar :size="30" :src="content.img_path" shape="square"
                        class="chat-img-right hidden-sm-and-down"></el-avatar>
+            </div>
           </div>
         </el-col>
       </el-row>
     </div>
     <div class="chat-input">
       <div class="input-expend">
-        <el-button type="text">文字按钮</el-button>
-        <el-button type="text">文字按钮</el-button>
-        <el-button type="text">文字按钮</el-button>
+        <el-button type="text"><i class="el-icon-picture-outline-round"></i></el-button>
+        <el-button type="text"><i class="el-icon-folder-opened"></i></el-button>
+        <el-button type="text"><i class="el-icon-scissors"></i></el-button>
       </div>
       <el-input
         ref="input"
@@ -60,9 +73,6 @@
         @keydown.enter.native.exact.prevent="sendMessage"
         v-on:keyup.alt.enter.native="ChatTextArea+='\n'"
       ></el-input>
-    </div>
-    <div v-if="isShowCard" class="popBox" ref="popBox">
-      <user-card :userInfo="memberDict[showUID]"></user-card>
     </div>
   </div>
 </template>
@@ -91,14 +101,14 @@
     },
     mounted () {
       this.initWebSocket()
-      let _this = this
-      document.addEventListener('click', function (e) {
-        console.log(_this.$refs.popBox, e.target)
-        if (_this.$refs.popBox.contains(e.target)) {
-          return
-        }
-        this.isShowCard = false
-      })
+      // let _this = this
+      // document.addEventListener('click', function (e) {
+      //   console.log(_this.$refs.popBox, e.target)
+      //   if (!_this.$refs.popBox.contains(e.target)) {
+      //     console.log('aasdas')
+      //     // _this.isShowCard = false
+      //   }
+      // })
     },
     destroyed () {
       this.chatSocket.close()
@@ -108,7 +118,7 @@
         bind: (el, binding) => {
           console.log('asd', this)
           el.addEventListener('scroll', () => {
-            if (el.scrollTop < 5) {
+            if (el.scrollTop < 1) {
               let loadData = binding.value
               loadData()
             }
@@ -409,6 +419,7 @@
     text-align: left;
     padding-left: 20px;
     padding-right: 20px;
+    word-break:break-all;
   }
 
   .chat-msg-right {
